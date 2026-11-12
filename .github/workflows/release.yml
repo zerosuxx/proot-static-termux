@@ -13,15 +13,24 @@ jobs:
   build-and-release:
     runs-on: ubuntu-24.04
     steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare patched nix-on-droid source
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/taranarmo/nix-on-droid.git nix-on-droid
+          git -C nix-on-droid checkout --detach 62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea
+          git -C nix-on-droid apply "$GITHUB_WORKSPACE/patches/disable-llvm-checks.patch"
+
       - name: Build both PRoot architectures
         run: |
-          nix build 'github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea#prootTermux-aarch64' -o result-aarch64
-          nix build 'github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea#prootTermux-x86_64' -o result-x86_64
+          nix build './nix-on-droid#prootTermux-aarch64' -o result-aarch64
+          nix build './nix-on-droid#prootTermux-x86_64' -o result-x86_64
           install -m 0755 result-aarch64/bin/proot-static proot-static-aarch64
           install -m 0755 result-x86_64/bin/proot-static proot-static-x86_64
           sha256sum proot-static-aarch64 proot-static-x86_64 > SHA256SUMS
