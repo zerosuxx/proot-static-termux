@@ -1,20 +1,27 @@
 diff --git a/pkgs/cross-compiling/cross-pkgs.nix b/pkgs/cross-compiling/cross-pkgs.nix
+index 9a14cee..3ae0d06 100644
 --- a/pkgs/cross-compiling/cross-pkgs.nix
 +++ b/pkgs/cross-compiling/cross-pkgs.nix
-@@ -15,5 +15,15 @@ let
+@@ -11,6 +11,7 @@ let
+     patches = [
+       ./compiler-rt.patch
+       ./libunwind.patch
++      ./llvm-17-do-checks.patch
      ];
    };
--  pkgsCross = import pkgsCross-patched args;
-+  pkgsCross = import pkgsCross-patched (args // {
-+    overlays = [
-+      (final: prev: {
-+        llvmPackages_17 = prev.llvmPackages_17.overrideScope (llvmFinal: llvmPrev: {
-+          llvm = llvmPrev.llvm.overrideAttrs (_: {
-+            doCheck = false;
-+          });
-+        });
-+      })
-+    ];
-+  });
- in
- pkgsCross
+   pkgsCross = import pkgsCross-patched args;
+diff --git a/pkgs/cross-compiling/llvm-17-do-checks.patch b/pkgs/cross-compiling/llvm-17-do-checks.patch
+new file mode 100644
+index 0000000..7a2001a
+--- /dev/null
++++ b/pkgs/cross-compiling/llvm-17-do-checks.patch
+@@ -0,0 +1,9 @@
++diff --git a/pkgs/development/compilers/llvm/17/default.nix b/pkgs/development/compilers/llvm/17/default.nix
++--- a/pkgs/development/compilers/llvm/17/default.nix
+++++ b/pkgs/development/compilers/llvm/17/default.nix
++@@ -90,4 +90,5 @@
++   in {
++
++     libllvm = callPackage ../common/llvm {
+++      doCheck = false;
++       patches = [

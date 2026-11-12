@@ -26,6 +26,7 @@ jobs:
           git clone --filter=blob:none --no-checkout https://github.com/taranarmo/nix-on-droid.git nix-on-droid
           git -C nix-on-droid checkout --detach 62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea
           git -C nix-on-droid apply "$GITHUB_WORKSPACE/patches/disable-llvm-checks.patch"
+          git -C nix-on-droid add -N pkgs/cross-compiling/llvm-17-do-checks.patch
 
       - name: Build both PRoot architectures
         run: |
