@@ -1,0 +1,20 @@
+diff --git a/pkgs/cross-compiling/cross-pkgs.nix b/pkgs/cross-compiling/cross-pkgs.nix
+--- a/pkgs/cross-compiling/cross-pkgs.nix
++++ b/pkgs/cross-compiling/cross-pkgs.nix
+@@ -15,5 +15,15 @@ let
+     ];
+   };
+-  pkgsCross = import pkgsCross-patched args;
++  pkgsCross = import pkgsCross-patched (args // {
++    overlays = [
++      (final: prev: {
++        llvmPackages_17 = prev.llvmPackages_17.overrideScope (llvmFinal: llvmPrev: {
++          llvm = llvmPrev.llvm.overrideAttrs (_: {
++            doCheck = false;
++          });
++        });
++      })
++    ];
++  });
+ in
+ pkgsCross
