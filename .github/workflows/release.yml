@@ -10,44 +10,21 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: aarch64
-            attr: prootTermux-aarch64
-          - arch: x86_64
-            attr: prootTermux-x86_64
     steps:
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build PRoot from pinned Termux fork
-        run: nix build 'github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea#${{ matrix.attr }}' -o result
-
-      - name: Stage release asset
-        run: install -m 0755 result/bin/proot-static proot-static-${{ matrix.arch }}
-
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: proot-static-${{ matrix.arch }}
-          path: proot-static-${{ matrix.arch }}
-          if-no-files-found: error
-
-  release:
-    needs: build
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release-assets
-          merge-multiple: true
+      - name: Build both PRoot architectures
+        run: |
+          nix build 'github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea#prootTermux-aarch64' -o result-aarch64
+          nix build 'github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea#prootTermux-x86_64' -o result-x86_64
+          install -m 0755 result-aarch64/bin/proot-static proot-static-aarch64
+          install -m 0755 result-x86_64/bin/proot-static proot-static-x86_64
+          sha256sum proot-static-aarch64 proot-static-x86_64 > SHA256SUMS
 
       - name: Create GitHub Release and upload assets
         env:
@@ -55,7 +32,8 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$RELEASE_TAG" release-assets/* \\
+          gh release create "$RELEASE_TAG" \\
+            proot-static-aarch64 proot-static-x86_64 SHA256SUMS \\
             --repo "$REPOSITORY" \\
             --title "$RELEASE_TAG" \\
             --generate-notes
