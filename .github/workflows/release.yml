@@ -1,0 +1,38 @@
+name: Build and release PRoot
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            attr: prootTermux-aarch64
+          - arch: x86_64
+            attr: prootTermux-x86_64
+    steps:
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build PRoot from pinned Termux fork
+        run: nix build 'github:taranarmo/nix-on-droid/a70ed880f97200e4e54e4b8eb2ae5307f6ba3f03#${{ matrix.attr }}' -o result
+
+      - name: Stage release asset
+        run: install -m 0755 result/bin/proot-static proot-static-${{ matrix.arch }}
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" "proot-static-${{ matrix.arch }}" --repo "$GITHUB_REPOSITORY" --clobber
