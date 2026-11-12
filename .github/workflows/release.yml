@@ -27,7 +27,7 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build PRoot from pinned Termux fork
-        run: nix build 'github:taranarmo/nix-on-droid/a70ed880f97200e4e54e4b8eb2ae5307f6ba3f03#${{ matrix.attr }}' -o result
+        run: nix build 'github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea#${{ matrix.attr }}' -o result
 
       - name: Stage release asset
         run: install -m 0755 result/bin/proot-static proot-static-${{ matrix.arch }}
