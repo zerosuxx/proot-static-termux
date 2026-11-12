@@ -17,3 +17,37 @@ Push a version tag such as `v2026.10.12` to build and publish:
 
 The release assets are raw static binaries. Verify the downloaded file with
 SHA-256 before staging it as `/bin/.proot-static.new` on a Nix-on-Droid device.
+
+## Build locally without running the test suite
+
+The PRoot check phase runs a large test suite. To skip it, override
+`doCheck` on the exported derivation. Run these commands on a Linux builder
+(the flake's package output is Linux-specific; a macOS host needs a configured
+Linux builder).
+
+AArch64 Android:
+
+```sh
+nix build --impure --expr '
+  (builtins.getFlake
+    "github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea"
+  ).packages.aarch64-linux.prootTermux-aarch64.overrideAttrs (_: {
+    doCheck = false;
+  })
+' -o result-aarch64
+```
+
+x86_64 Android:
+
+```sh
+nix build --impure --expr '
+  (builtins.getFlake
+    "github:taranarmo/nix-on-droid/62f8ea7c10e2aafe0db512ee8f36d187ac7a56ea"
+  ).packages.aarch64-linux.prootTermux-x86_64.overrideAttrs (_: {
+    doCheck = false;
+  })
+' -o result-x86_64
+```
+
+The binaries are at `result-aarch64/bin/proot-static` and
+`result-x86_64/bin/proot-static`.
